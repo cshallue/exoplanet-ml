@@ -1,0 +1,16 @@
+name: astronet
+channels:
+  - conda-forge
+dependencies:
+  - python ==3.7
+  - astropy ==4.3.1
+  - scipy ==1.7.3
+  - pip
+  - pip:
+    - numpy ==1.21.6
+    - pandas ==1.1.5
+    - matplotlib  ==3.5.3
+    - absl-py ==2.1.0
+    - tensorflow-cpu ==1.15.0
+    - protobuf ==3.20.1
+    - pydl ==0.7.0
