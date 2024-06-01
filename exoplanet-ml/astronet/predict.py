@@ -114,12 +114,12 @@ def _process_tce(feature_config):
   if "global_view" in feature_config:
     global_view = preprocess.global_view(time, flux, FLAGS.period)
     # Add a batch dimension.
-    features["global_view"] = np.expand_dims(global_view, 0)
+    features["global_view"] = np.expand_dims(global_view.astype(np.float32), 0)
 
   if "local_view" in feature_config:
     local_view = preprocess.local_view(time, flux, FLAGS.period, FLAGS.duration)
     # Add a batch dimension.
-    features["local_view"] = np.expand_dims(local_view, 0)
+    features["local_view"] = np.expand_dims(local_view.astype(np.float32), 0)
 
   # Possibly save plots.
   if FLAGS.output_image_file:
