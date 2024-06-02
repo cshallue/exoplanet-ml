@@ -13,14 +13,12 @@ Chris Shallue: [@cshallue](https://github.com/cshallue)
 
 Chris Shallue: [@cshallue](https://github.com/cshallue)
 
-## Additional Dependencies
+## Dependencies
 
-In addition to the [required packages](../../README.md#required-packages) listed in
-the top-level README, this package requires:
+This package requires:
 
-* **TensorFlow 1.12 or greater** ([instructions](https://www.tensorflow.org/install/))
+* **TensorFlow V1, 1.12 or greater** ([instructions](https://www.tensorflow.org/install/))
 * **TensorFlow Probability** ([instructions](https://www.tensorflow.org/probability/install))
-* **Six** ([instructions](https://pypi.org/project/six/))
 
 ## Basic Usage
 

@@ -6,15 +6,16 @@
 
 Chris Shallue: [@cshallue](https://github.com/cshallue)
 
-## Background
+## Overview
 
-This directory contains TensorFlow models and data processing code for
-identifying exoplanets in astrophysical light curves. For complete background,
-see [our paper](http://adsabs.harvard.edu/abs/2018AJ....155...94S) in
+This directory contains TensorFlow models and data processing code used to
+identify exoplanets in stellar light curves, as described in
+[our paper](http://adsabs.harvard.edu/abs/2018AJ....155...94S) in
 *The Astronomical Journal*.
 
 For shorter summaries, see:
 
+* ["Open Sourcing the Hunt for Exoplanets"](https://opensource.googleblog.com/2018/03/open-sourcing-hunt-for-exoplanets.html) on the Google open source blog
 * ["Earth to Exoplanet"](https://www.blog.google/topics/machine-learning/hunting-planets-machine-learning/) on the Google blog
 * [This blog post](https://www.cfa.harvard.edu/~avanderb/page1.html#kepler90) by Andrew Vanderburg
 * [This great article](https://milesobrien.com/artificial-intelligence-gains-intuition-hunting-exoplanets/) by Fedor Kossakovski
@@ -30,21 +31,35 @@ around Kepler-90. *The Astronomical Journal*, 155(2), 94.
 
 Full text available at [*The Astronomical Journal*](http://iopscience.iop.org/article/10.3847/1538-3881/aa9e09/meta).
 
+## Status
+
+The code in this repository was written in 2017 using TensorFlow V1, which is now deprecated.
+It is now mainly intended as a reference and is not being actively developed or maintained.
+
+By following the instructions below, you may still be able to run the code by installing older
+versions of TensorFlow and Python. However, the required versions may not be available for
+newer computers (e.g. Macbooks with M1/M2 chips).
+
 # Walkthrough
 
 ## Setup
 
-First, ensure that you have installed the
-[required packages](../../README.md#required-packages) and that the
-[unit tests](../../README.md#run-unit-tests) pass.
+The required packages and their versions can be found in the `astronet-env.yml` [Conda](https://conda.io/)
+environment file in this directory.
 
-Next, use Bazel to create exectuable Python scripts. (Alternatively, since all
-code is pure Python and does not need to be compiled, we could instead add the
-`exoplanet-ml` directory to `PYTHONPATH`.)
-
+The easiest way to get started is to make a new Conda environment from that file:
 ```bash
-cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
-bazel build astronet/...
+conda env create --file astronet-env.yml
+```
+
+The following instructions assume that all dependencies have been installed correctly and that
+the user is using a bash terminal.
+
+To run the Python commands below, we need to set the Python path and go to the astronet directory:
+```bash
+GIT_DIR=... # Path to directory containing exoplanet-ml repository
+export PYTHONPATH=$PYTHONPATH:$GIT_DIR/exoplanet-ml/exoplanet-ml
+cd $GIT_DIR/exoplanet-ml/exoplanet-ml/astronet
 ```
 
 ## Kepler Data and TCEs
@@ -118,22 +133,22 @@ dataset, the files downloaded by the following script take up about **90 GB**.
 
 ```bash
 # Filename containing the CSV file of TCEs in the training set.
-TCE_CSV_FILE="${HOME}/astronet/dr24_tce.csv"
+TCE_CSV_FILE="$HOME/astronet/dr24_tce.csv"
 
 # Directory to download Kepler light curves into.
-KEPLER_DATA_DIR="${HOME}/astronet/kepler/"
+KEPLER_DATA_DIR="$HOME/astronet/kepler/"
 
 # Generate a bash script that downloads the Kepler light curves in the training set.
 python astronet/data/generate_download_script.py \
-  --kepler_csv_file=${TCE_CSV_FILE} \
-  --download_dir=${KEPLER_DATA_DIR}
+  --kepler_csv_file=$TCE_CSV_FILE \
+  --download_dir=$KEPLER_DATA_DIR
 
 # Run the download script to download Kepler light curves.
 ./get_kepler.sh
 ```
 
 The final line should read: `Finished downloading 12669 Kepler targets to
-${KEPLER_DATA_DIR}`
+$KEPLER_DATA_DIR`
 
 Let's explore the downloaded light curve of the Kepler-90 star! Note that Kepler
 light curves are divided into
@@ -220,13 +235,13 @@ input TCE CSV file. The columns include:
 
 ```bash
 # Directory to save output TFRecord files into.
-TFRECORD_DIR="${HOME}/astronet/tfrecord"
+TFRECORD_DIR="$HOME/astronet/tfrecord"
 
 # Preprocess light curves into sharded TFRecord files using 5 worker processes.
-bazel-bin/astronet/data/generate_input_records \
-  --input_tce_csv_file=${TCE_CSV_FILE} \
-  --kepler_data_dir=${KEPLER_DATA_DIR} \
-  --output_dir=${TFRECORD_DIR} \
+python data/generate_input_records.py \
+  --input_tce_csv_file=$TCE_CSV_FILE \
+  --kepler_data_dir=$KEPLER_DATA_DIR \
+  --output_dir=$TFRECORD_DIR \
   --num_worker_processes=5
 ```
 
@@ -316,15 +331,15 @@ run the following training script:
 
 ```bash
 # Directory to save model checkpoints into.
-MODEL_DIR="${HOME}/astronet/model/"
+MODEL_DIR="$HOME/astronet/model/"
 
 # Run the training script.
-bazel-bin/astronet/train \
+python train.py \
   --model=AstroCNNModel \
   --config_name=local_global \
-  --train_files=${TFRECORD_DIR}/train* \
-  --eval_files=${TFRECORD_DIR}/val* \
-  --model_dir=${MODEL_DIR}
+  --train_files="$TFRECORD_DIR/train*" \
+  --eval_files="$TFRECORD_DIR/val*" \
+  --model_dir=$MODEL_DIR
 ```
 
 Optionally, you can also run a [TensorBoard](https://www.tensorflow.org/programmers_guide/summaries_and_tensorboard)
@@ -333,7 +348,7 @@ monitoring of training progress and evaluation metrics.
 
 ```bash
 # Launch TensorBoard server.
-tensorboard --logdir ${MODEL_DIR}
+tensorboard --logdir $MODEL_DIR
 ```
 
 The TensorBoard server will show a page like this:
@@ -348,11 +363,11 @@ directory, which will be visible in TensorBoard.
 
 ```bash
 # Run the evaluation script.
-bazel-bin/astronet/evaluate \
+python evaluate.py \
   --model=AstroCNNModel \
   --config_name=local_global \
-  --eval_files=${TFRECORD_DIR}/test* \
-  --model_dir=${MODEL_DIR}
+  --eval_files="$TFRECORD_DIR/test*" \
+  --model_dir=$MODEL_DIR
 ```
 
 The output should look something like this:
@@ -371,22 +386,22 @@ TCE though your trained model, execute the following command:
 ```bash
 # If you skipped the step of downloading the Kepler data, you will first need
 # to download the light curve for Kepler-90 (~5.7MB):
-KEPLER_DATA_DIR="${HOME}/astronet/kepler/"
+KEPLER_DATA_DIR="$HOME/astronet/kepler/"
 wget -nH --cut-dirs=6 -r -l0 -c -N -np -erobots=off -R 'index*' -A _llc.fits \
-  -P ${KEPLER_DATA_DIR}/0114/011442793 \
+  -P $KEPLER_DATA_DIR/0114/011442793 \
   http://archive.stsci.edu/pub/kepler/lightcurves/0114/011442793/
 
 # Generate a prediction for a new TCE.
-bazel-bin/astronet/predict \
+python predict.py \
   --model=AstroCNNModel \
   --config_name=local_global \
-  --model_dir=${MODEL_DIR} \
-  --kepler_data_dir=${KEPLER_DATA_DIR} \
+  --model_dir=$MODEL_DIR \
+  --kepler_data_dir=$KEPLER_DATA_DIR \
   --kepler_id=11442793 \
   --period=14.44912 \
   --t0=2.2 \
   --duration=0.11267 \
-  --output_image_file="${HOME}/astronet/kepler-90i.png"
+  --output_image_file="$HOME/astronet/kepler-90i.png"
 ```
 
 The output should look like this:
